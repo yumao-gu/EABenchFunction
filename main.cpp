@@ -8,13 +8,16 @@
 #include <opencv2/core/core.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
+#include "/home/lenovo/matplotlib-cpp/matplotlibcpp.h"
 #include <map>
 
 #define PI 3.1415926
 
+
 using namespace std;
 using namespace Eigen;
 using namespace cv;
+namespace plt = matplotlibcpp;
 
 
 struct particle
@@ -30,6 +33,7 @@ vector<particle> selected_particles;
 int population = 20;
 int n_max = 4;    //fix:SelectParent
 int max_gernation = 1000;
+int FUNC_TYPE = 2;
 
 static default_random_engine e((unsigned)time(0));
 static uniform_real_distribution<double> n_uniform(0,1);
@@ -284,21 +288,52 @@ int main()
         cout<<i<<'\t'<<particle.x()<<'\t'<<particle.y()<<endl;
         i++;
     }*/
+
     Initialization();
     FitnessAll(2);
     int i = 0;
     while(i < max_gernation)
     {
+        std::vector<std::vector<double>> x_map, y_map, z_map;
+        for (double i = -2; i <= 2;  i += 0.1) {
+            std::vector<double> x_row, y_row, z_row;
+            for (double j = -2; j <= 2; j += 0.1) {
+                x_row.push_back(i);
+                y_row.push_back(j);
+                if(FUNC_TYPE  == 1)
+                {
+                    z_row.push_back(pow(i,2) + 1 * pow((j - pow(i,2)),2));
+                }
+                if(FUNC_TYPE  == 2)
+                {
+                    z_row.push_back((i * i - 10 * cos(2 * PI*i) + 10.0) + (j * j - 10 * cos(2 * PI*j ) + 10.0));
+                }
+            }
+            x_map.push_back(x_row);
+            y_map.push_back(y_row);
+            z_map.push_back(z_row);
+        }
+
+        plt::plot_surface(x_map, y_map, z_map,{{"alpha","0.0"},{"shade","False"}});
+        std::vector<double> x, y, z;
         //cout<<"/////////////////////////////////////////////////////////"<<endl;
         NewGeneration();
         cout<<i<<"\tcurrent best fitness : "<<GetCurrentBest(-100.0).val<<endl;
+        x.push_back(GetCurrentBest(-100.0).pos.x());
+        y.push_back(GetCurrentBest(-100.0).pos.y());
+
+        plt::scatter(x, y,20.0,{{"c","k"}});
+        plt::show();
+
         i++;
         //cout<<"END /////////////////////////////////////////////////////"<<endl;
-        if(GetCurrentBest(-100.0).val < 1e-4)
+        if(GetCurrentBest(-100.0).val < 1e-3)
         {
             break;
         }
     }
+
+
 
     std::cout << "Hello, World!" << std::endl;
     return 0;
